@@ -1,7 +1,19 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+
+class ResNet_Block(nn.Module):
     
+    def __init__(self,embedding_size):
+        super(ResNet_Block,self).__init__()
+        
+        self.norm_layer = nn.LayerNorm(embedding_size)
+        
+    def forward(self, x, y):
+        
+        y = x +y
+        out = self.norm_layer(y)
+        return out
     
 class Multihead_Attention(nn.Module):
     
@@ -18,11 +30,11 @@ class Multihead_Attention(nn.Module):
         
         self.final_layer = nn.Linear(embedding_size * self.head, self.v_size)
         
-    def forward(self,x, mask=None):
+    def forward(self, Q, K, V, mask=None):
         
-        query = self.q_layer(x)
-        key = self.k_layer(x)
-        value  = self.v_layer(x)
+        query = self.q_layer(Q)
+        key = self.k_layer(K)
+        value  = self.v_layer(V)
         
         #print('query_size : ',query)
         print('key_size : ',key.shape)
@@ -41,17 +53,15 @@ class Multihead_Attention(nn.Module):
         
         key_T = key.transpose(2,3)
         
-        print('query : ',query.shape)
-        print('key_T : ',key_T.shape )
         #query와 key를 matmul을 한다 이때 key는 key_T로 변경해줘야 한다. matmul한 값은 루트 embeddingsize로 나눠서 scaling한다.
         atten_score = torch.matmul(query,key_T)/ math.sqrt(self.embedding_size)
-        #print('attne_socre',atten_score.shape)
         
         if mask is not None:
             #큰 -값을 주면 softmax에서는 0값으로 반영 되어진다. 
             masked_atten_score = atten_score.masked_fill(mask==True, -1e9)
             
         soft_atten = F.softmax(masked_atten_score,dim=-1)
+        
         attention = torch.matmul(soft_atten, value)
         attention = attention.transpose(1,2)
         attention = attention.contiguous().view(self.batch_size, -1,self.head*self.embedding_size)
