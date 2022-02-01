@@ -35,7 +35,6 @@ class Encoder_Layer(nn.Module):
 
     
     
-#need to modify    
 class Decoder_Layer(nn.Module):
     
     def __init__(self, batch_size, embedding_size, heads):
@@ -45,14 +44,13 @@ class Decoder_Layer(nn.Module):
         self.embedding_size = embedding_size
         self.heads = heads
         
-        #trimask가 여기서 들어가야하나?
         self.masked_multi_attention = Multihead_Attention(self.batch_size, self.heads, self.embedding_size)
         self.multi_head_attention = Multihead_Attention(self.batch_size, self.heads, self.embedding_size)
         
         self.ffnn = Position_Wise_Feed_Forward_Layer(self.embedding_size)
         self.res_block = ResNet_Block(self.embedding_size)
         
-    def forward(self, input_data, encoder_out, mask, src_mask):
+    def forward(self, input_data, encoder_out, mask,src_mask):
         
         
         masked_muti_atten_out = self.masked_multi_attention(Q=input_data, K=input_data, 
