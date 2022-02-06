@@ -1,6 +1,6 @@
 import torch.nn as nn
 import torch
-from SubLayers import Multihead_Attention, Position_Wise_Feed_Forward_Layer, ResNet_Block
+from attention.SubLayer import Multihead_Attention, Position_Wise_Feed_Forward_Layer, ResNet_Block
 
 
 __author__ = "sanguk Han"
@@ -21,17 +21,17 @@ class Encoder_Layer(nn.Module):
         
         self.res_block = ResNet_Block(self.embedding_size)
         
-    def forward(self,input_data, mask):
+    def forward(self,src_data, src_mask):
         
-        print('outu1')
-        muli_out = self.multi_attention_model(Q=input_data, K=input_data, V=input_data, en_mask=mask,de_mask=None)
+        muli_out = self.multi_attention_model(Q=src_data, K=src_data, V=src_data, mask=src_mask)
+        output1 = self.res_block(src_data,muli_out)
         
-        output1 = self.res_block(input_data,muli_out)
-        print('out2')
         position_out = self.position_feedforward(output1)
         output2 = self.res_block(output1, position_out)
         
         return output2
+        
+
 
     
     
@@ -50,13 +50,13 @@ class Decoder_Layer(nn.Module):
         self.ffnn = Position_Wise_Feed_Forward_Layer(self.embedding_size)
         self.res_block = ResNet_Block(self.embedding_size)
         
-    def forward(self, input_data, encoder_out, mask,src_mask):
+    def forward(self, trg_data, trg_tri_mask, encoder_out, src_mask):
         
         
-        masked_muti_atten_out = self.masked_multi_attention(Q=input_data, K=input_data, 
-                                                            V=input_data, mask=mask)
+        masked_muti_atten_out = self.masked_multi_attention(Q=trg_data, K=trg_data, 
+                                                            V=trg_data, mask=trg_tri_mask)
         
-        output1 = self.res_block(input_data,masked_muti_atten_out)
+        output1 = self.res_block(trg_data,masked_muti_atten_out)
         
         multi_head_atten_out = self.multi_head_attention(Q=masked_muti_atten_out, K=encoder_out,
                                                          V=encoder_out, mask=src_mask)

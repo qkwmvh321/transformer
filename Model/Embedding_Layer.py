@@ -1,5 +1,7 @@
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
+import numpy as np
 
 __author__ = 'sanguk Han'
 
@@ -43,7 +45,6 @@ class Embedding(nn.Module):
         y = self.embedding_layer(x)
         return y
     
-    
 class Embedding_ready(nn.Module):
     
     def __init__(self,max_vocab_len, embeding_size, seq_len, heads):
@@ -53,25 +54,9 @@ class Embedding_ready(nn.Module):
         self.position_encoder = PositionalEncoding(embeding_size)
         self.seq_len = seq_len
         self.heads = heads
-        
-    def get_mask(self,x):
-        
-        mask = x==12975
-        remask = torch.repeat_interleave(mask,self.seq_len, dim=0).view(-1,self.seq_len,self.seq_len).view(-1,self.seq_len,self.seq_len)
-        
-        for idx in remask:
-            for i,iidx in enumerate(idx[0]):
-                if iidx ==True:
-                    break
-            idx[i:]=True
-            
-        remask2=torch.repeat_interleave(remask.unsqueeze(1),self.heads,dim=1)
-        return remask2
-        
+
     def forward(self,x):
-        print(x.shape)
-        mask =self.get_mask(x)
         x_embedding  = self.embedding_layer(x)
         x_pos_embedding = self.position_encoder(x_embedding)
         
-        return x_pos_embedding,mask
+        return x_pos_embedding
